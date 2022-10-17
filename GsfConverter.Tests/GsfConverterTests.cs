@@ -25,7 +25,7 @@ namespace GsfConverter.Tests
             var expected = new List<(int X, int Y, int Z)>();
 
             // act
-            var actualList = Converter.ADConvert(Converter.ReadStructure(path));              
+            var actualList = Converter.ADConvert(Converter.ReadStructure(path), 10000);              
 
             // assert
             Assert.AreEqual(expected.GetType(), actualList.GetType());
@@ -37,7 +37,7 @@ namespace GsfConverter.Tests
             var path = "Accreation_ASCII_1.rawst";
             var pathGsf = "NoseTest.gsf";
             // act
-            var gsfList = Converter.ADConvert(Converter.ReadStructure(path));
+            var gsfList = Converter.ADConvert(Converter.ReadStructure(path), 10000);
             Converter.SaveToGsf(pathGsf, gsfList);
 
             // assert
