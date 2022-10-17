@@ -8,14 +8,29 @@ public static class Converter
     {
         var pointsList = new List<(double X, double Y, double Z)> ();
         string[] lines = File.ReadAllLines(path);
+        float xMin = 0;
+        float yMin = 0;
+        float zMin = 0;
+
+        // Да, это мерзотный дубляж, но мне лень. Работает - и хорошо :-)
+
         for (int i = 1; i < lines.Length; i++)
         {
-            var line = lines[i].Split(", ");
+            var line = lines[i].Split(",");
+            if (float.Parse(line[1].Trim(), new CultureInfo("en-us")) < xMin)
+                xMin = float.Parse(line[1].Trim(), new CultureInfo("en-us"));
+            if (float.Parse(line[2].Trim(), new CultureInfo("en-us")) < yMin)
+                yMin = float.Parse(line[2].Trim(), new CultureInfo("en-us"));
+            if (float.Parse(line[3].Trim(), new CultureInfo("en-us")) < zMin)
+                zMin = float.Parse(line[3].Trim(), new CultureInfo("en-us"));
+        }
+        for (int i = 1; i < lines.Length; i++)
+        {
+            var line = lines[i].Split(",");
             pointsList.Add((float.Parse(
-                line[1], new CultureInfo("en-us")), 
-                float.Parse(line[2], new CultureInfo("en-us")), 
-                float.Parse(line[3], new CultureInfo("en-us")
-                )
+                line[1].Trim(), new CultureInfo("en-us"))-xMin, 
+                float.Parse(line[2].Trim(), new CultureInfo("en-us")) - yMin, 
+                float.Parse(line[3].Trim(), new CultureInfo("en-us")) - zMin
                 ));
         }
         return pointsList;
