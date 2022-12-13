@@ -33,29 +33,89 @@ public static class Converter
                 float.Parse(line[3].Trim(), new CultureInfo("en-us")) - zMin
                 ));
         }
+
         return pointsList;
     }
     
-    public static List<(int X, int Y, int Z)> ADConvert (
+    public static List<(int X, int Y, int Z, int state)> ADConvert (
         List<(double X, double Y, double Z)> points, 
         int multiplier
         )
     {
         int discretizationCoefficient = multiplier;
        
-        List<(int X, int Y, int Z)> discretePoints = new List<(int X, int Y, int Z)>();
-        
+        List<(int X, int Y, int Z, int state)> discretePoints = new List<(int X, int Y, int Z, int state)>();
+        double max = points.Max(c => Math.Max(c.X, Math.Max(c.Y, c.Z)));
+        double maxNew = (max * discretizationCoefficient);
+        double xMax = 0;
+        double yMax = 0;
+        double zMax = 0;
+        //foreach (var p in points)
+        //{
+        //    if (xMax < p.X)
+        //        xMax = p.X;
+        //    if (yMax < p.Y)
+        //        yMax = p.Y;
+        //    if (zMax < p.Z)
+        //        zMax = p.Z;
+        //}
+        int[,,] tempArray = new int[
+            (int)(points.Max(p => p.X) * discretizationCoefficient),
+            (int)(points.Max(p => p.Y) * discretizationCoefficient),
+            (int)(points.Max(p => p.Z) * discretizationCoefficient)];
+        //int[,,] tempArray = new int[
+        //    (int)(xMax * discretizationCoefficient),
+        //    (int)(yMax * discretizationCoefficient),
+        //    (int)(zMax * discretizationCoefficient)];
+
+        //int ratio = (int)(maxNew/max);
+        double ratio = max / maxNew;
+        ratio = 0.001;
+        double step = 0.005;
         foreach (var point in points)
         {
             int X = (int)(point.X * discretizationCoefficient);
             int Y = (int)(point.Y * discretizationCoefficient);
-            int Z = (int)(point.Z * discretizationCoefficient);                
-            discretePoints.Add((X, Y, Z));
+            int Z = (int)(point.Z * discretizationCoefficient);
+            for (double x = point.X; x < point.X + step; x+=ratio)
+            {
+                for (double y = point.Y; y < point.Y + step; y += ratio)
+                {
+                    for (double z = point.Z; z < point.Z + step; z+=ratio)
+                    {
+                        if (x * discretizationCoefficient >= tempArray.GetLength(0) || 
+                            y * discretizationCoefficient >= tempArray.GetLength(1) || 
+                            z * discretizationCoefficient >= tempArray.GetLength(2))
+                            continue;
+                        tempArray[(int)(
+                            x * discretizationCoefficient), 
+                            (int)(y * discretizationCoefficient),
+                            (int)(z * discretizationCoefficient)] = 1;
+                        //discretePoints.Add((
+                        //    (int)(x * discretizationCoefficient), 
+                        //    (int)(y * discretizationCoefficient), 
+                        //    (int)(z * discretizationCoefficient)));
+                    }
+                }
+            }
+
+            
+            //discretePoints.Add((X, Y, Z));
+
         }           
+        for (int z = 0; z < tempArray.GetLength(2); z++)
+            for (int y = 0; y < tempArray.GetLength(1); y++)
+                for (int x = 0; x < tempArray.GetLength(0); x++)
+                {
+                    if (tempArray[x, y, z] == 1)
+                        discretePoints.Add((x, y, z, 1));
+                    else if (tempArray[x, y, z] == 0)
+                        discretePoints.Add((x, y, z, -10));
+                }
         return discretePoints;
     }
 
-    public static void SaveToGsf(string path, List<(int X, int Y, int Z)> points)
+    public static void SaveToGsf(string path, List<(int X, int Y, int Z, int state)> points)
     {
         StreamWriter sw = new StreamWriter(path);
         
@@ -63,7 +123,7 @@ public static class Converter
         foreach (var p in points)
         {
             sw.WriteLine(string.Join("\t", new string[] {p.X.ToString(),p.Y.ToString(),
-                                p.Z.ToString(), "1"}));
+                                p.Z.ToString(), p.state.ToString()}));
         }
                     
         sw.Close();
